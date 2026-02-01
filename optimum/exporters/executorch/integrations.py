@@ -206,6 +206,10 @@ class MultiModalTextToTextExportableModule(torch.nn.Module):
             additional_metadata_kwargs[f"{modality}_token_id"] = getattr(self.config, "audio_token_id")
         elif modality == "vision":
             additional_metadata_kwargs[f"{modality}_token_id"] = getattr(self.config, "image_token_id")
+
+        if hasattr(self.config, "eos_token_id"):
+            additional_metadata_kwargs["get_eos_id"] = self.config.eos_token_id
+
         self.metadata = save_config_to_constant_methods(
             config=model.config.text_config,
             generation_config=getattr(model, "generation_config", None),

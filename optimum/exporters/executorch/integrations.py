@@ -469,7 +469,6 @@ class CausalLMExportableModule(torch.nn.Module):
             max_seq_len = self.metadata.get("get_max_seq_len")
             sliding_window = self.metadata.get("sliding_window", float("inf"))
             max_dim = min(max_seq_len, sliding_window) - 1
-            max_dim = max_seq_len - 1
             seq_len_dim = torch.export.Dim("seq_length_dim", max=max_dim)
             dynamic_shapes = {
                 "input_ids": {1: seq_len_dim},

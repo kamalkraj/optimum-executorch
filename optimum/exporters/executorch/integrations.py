@@ -300,10 +300,10 @@ class MultiModalTextToTextExportableModule(torch.nn.Module):
         """
         with torch.no_grad():
             max_seq_len = self.metadata.get("get_max_seq_len")
-            # sliding_window_len = self.metadata.get("sliding_window", float("inf"))
-            # max_seq_len = min(max_seq_len, sliding_window_len) - 1
-            # if max_seq_len == sliding_window_len - 1:
-            #     logging.info("Using sliding window as max sequence length in export.")
+            sliding_window_len = self.metadata.get("sliding_window", float("inf"))
+            max_seq_len = min(max_seq_len, sliding_window_len) - 1
+            if max_seq_len == sliding_window_len - 1:
+                logging.info("Using sliding window as max sequence length in export.")
 
             # 1. Export text decoder.
             exportable_module = TorchExportableModuleForDecoderOnlyLM(
@@ -467,8 +467,8 @@ class CausalLMExportableModule(torch.nn.Module):
             example_input_ids = torch.zeros((1, seq_length), dtype=torch.long, device=self.model.device)
             example_cache_position = torch.arange(seq_length, dtype=torch.long, device=self.model.device)
             max_seq_len = self.metadata.get("get_max_seq_len")
-            # sliding_window = self.metadata.get("sliding_window", float("inf"))
-            # max_dim = min(max_seq_len, sliding_window) - 1
+            sliding_window = self.metadata.get("sliding_window", float("inf"))
+            max_dim = min(max_seq_len, sliding_window) - 1
             max_dim = max_seq_len - 1
             seq_len_dim = torch.export.Dim("seq_length_dim", max=max_dim)
             dynamic_shapes = {

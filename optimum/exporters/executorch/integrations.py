@@ -206,6 +206,18 @@ class MultiModalTextToTextExportableModule(torch.nn.Module):
             additional_metadata_kwargs[f"{modality}_token_id"] = getattr(self.config, "audio_token_id")
         elif modality == "vision":
             additional_metadata_kwargs[f"{modality}_token_id"] = getattr(self.config, "image_token_id")
+
+        # Add EOS token metadata if available
+        eos_token_id = getattr(self.config, "eos_token_id", None)
+        if eos_token_id is not None:
+            if isinstance(eos_token_id, list):
+                if len(eos_token_id) > 1:
+                    additional_metadata_kwargs["get_eos_ids"] = eos_token_id
+                elif len(eos_token_id) == 1:
+                    additional_metadata_kwargs["get_eos_id"] = eos_token_id[0]
+            elif isinstance(eos_token_id, int):
+                additional_metadata_kwargs["get_eos_id"] = eos_token_id
+
         self.metadata = save_config_to_constant_methods(
             config=model.config.text_config,
             generation_config=getattr(model, "generation_config", None),
@@ -288,10 +300,10 @@ class MultiModalTextToTextExportableModule(torch.nn.Module):
         """
         with torch.no_grad():
             max_seq_len = self.metadata.get("get_max_seq_len")
-            sliding_window_len = self.metadata.get("sliding_window", float("inf"))
-            max_seq_len = min(max_seq_len, sliding_window_len) - 1
-            if max_seq_len == sliding_window_len - 1:
-                logging.info("Using sliding window as max sequence length in export.")
+            # sliding_window_len = self.metadata.get("sliding_window", float("inf"))
+            # max_seq_len = min(max_seq_len, sliding_window_len) - 1
+            # if max_seq_len == sliding_window_len - 1:
+            #     logging.info("Using sliding window as max sequence length in export.")
 
             # 1. Export text decoder.
             exportable_module = TorchExportableModuleForDecoderOnlyLM(
@@ -455,8 +467,9 @@ class CausalLMExportableModule(torch.nn.Module):
             example_input_ids = torch.zeros((1, seq_length), dtype=torch.long, device=self.model.device)
             example_cache_position = torch.arange(seq_length, dtype=torch.long, device=self.model.device)
             max_seq_len = self.metadata.get("get_max_seq_len")
-            sliding_window = self.metadata.get("sliding_window", float("inf"))
-            max_dim = min(max_seq_len, sliding_window) - 1
+            # sliding_window = self.metadata.get("sliding_window", float("inf"))
+            # max_dim = min(max_seq_len, sliding_window) - 1
+            max_dim = max_seq_len - 1
             seq_len_dim = torch.export.Dim("seq_length_dim", max=max_dim)
             dynamic_shapes = {
                 "input_ids": {1: seq_len_dim},
